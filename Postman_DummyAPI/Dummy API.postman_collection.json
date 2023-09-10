@@ -8,12 +8,47 @@
 	"item": [
 		{
 			"name": "Получение списка пользователей",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const responseData = JSON.parse(responseBody);\r",
+							"console.log(responseData)\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Validate the data object\", function () {  \r",
+							"    pm.expect(responseData).to.be.an('object');\r",
+							"    pm.expect(responseData.data).to.exist.and.to.be.an('array');\r",
+							"    pm.expect(responseData.data[0].lastName).to.exist.and.to.be.an('string');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"Verify that the picture URL in each user object is valid and accessible\", function () {\r",
+							"    pm.expect(responseData.data).to.be.an('array').and.not.to.be.empty;\r",
+							"\r",
+							"    responseData.data.forEach(function(user) {\r",
+							"        pm.expect(user.picture).to.exist.and.to.be.a('string');\r",
+							"        pm.expect(user.picture).to.match(/^https?:\\/\\/.+$/, \"Picture URL should be valid and accessible\");\r",
+							"    });\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "GET",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
@@ -35,18 +70,51 @@
 		},
 		{
 			"name": "Создание пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var id = pm.response.json().id\r",
+							"pm.collectionVariables.set(\"user_id\", id);\r",
+							"\r",
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"FirstName from request = firstName from response\", function () {\r",
+							"    let requestData = JSON.parse(pm.request.body.raw);\r",
+							"    let responseData = pm.response.json();\r",
+							"    pm.expect(requestData.firstName).to.eql(responseData.firstName);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"id is a non-empty string\", function () {\r",
+							"    let responseData = pm.response.json();\r",
+							"    pm.expect(responseData).to.be.an('object');\r",
+							"    pm.expect(responseData.id).to.exist.and.to.be.a('string').and.to.have.lengthOf.at.least(1, \"Value should not be empty\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Email is in a valid email format\", function () {\r",
+							"    let responseData = pm.response.json();\r",
+							"    pm.expect(responseData.email).to.match(/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"firstName\":\"Jack\",\r\n    \"lastName\":\"Freeman\",\r\n    \"email\": \"mrfreeman@mail.net\"\r\n}",
+					"raw": "{\r\n    \"firstName\":\"{{$randomUserName}}\",\r\n    \"lastName\":\"{{$randomLastName}}\",\r\n    \"email\": \"{{$randomEmail}}\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -72,12 +140,31 @@
 		},
 		{
 			"name": "Обновление пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"lastName is a non-empty string\", function () {\r",
+							"    let responseData = pm.response.json();\r",
+							"    pm.expect(responseData).to.be.an('object');\r",
+							"    pm.expect(responseData.lastName).to.exist.and.to.be.a('string');\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "PUT",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
@@ -91,7 +178,7 @@
 					}
 				},
 				"url": {
-					"raw": "https://dummyapi.io/data/v1/user/64ce4b94dcd38f2f7377dfd8",
+					"raw": "https://dummyapi.io/data/v1/user/{{user_id}}",
 					"protocol": "https",
 					"host": [
 						"dummyapi",
@@ -101,7 +188,7 @@
 						"data",
 						"v1",
 						"user",
-						"64ce4b94dcd38f2f7377dfd8"
+						"{{user_id}}"
 					]
 				}
 			},
@@ -109,17 +196,31 @@
 		},
 		{
 			"name": "Удаление пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "DELETE",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
 				"url": {
-					"raw": "https://dummyapi.io/data/v1/user/64ce571ddcd38f204a77e5a6",
+					"raw": "https://dummyapi.io/data/v1/user/{{user_id}}",
 					"protocol": "https",
 					"host": [
 						"dummyapi",
@@ -129,7 +230,7 @@
 						"data",
 						"v1",
 						"user",
-						"64ce571ddcd38f204a77e5a6"
+						"{{user_id}}"
 					]
 				}
 			},
@@ -137,6 +238,24 @@
 		},
 		{
 			"name": "Создание пользователя с применением неверного метода",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error message\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error).to.eql(\"PARAMS_NOT_VALID\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -145,7 +264,7 @@
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
@@ -177,17 +296,35 @@
 		},
 		{
 			"name": "Удаление несуществующего пользователя",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error message\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error).to.eql(\"PARAMS_NOT_VALID\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "DELETE",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
 				"url": {
-					"raw": "https://dummyapi.io/data/v1/user/64ce4ав98cd38f2f7372386с",
+					"raw": "https://dummyapi.io/data/v1/user/{{$randomInt}}",
 					"protocol": "https",
 					"host": [
 						"dummyapi",
@@ -197,7 +334,7 @@
 						"data",
 						"v1",
 						"user",
-						"64ce4ав98cd38f2f7372386с"
+						"{{$randomInt}}"
 					]
 				}
 			},
@@ -205,12 +342,45 @@
 		},
 		{
 			"name": "Создание пользователя без тела запроса",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 400\", function () {\r",
+							"    pm.response.to.have.status(400);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error message\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.error).to.eql(\"BODY_NOT_VALID\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error for lastName\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.data.lastName).to.eql(\"Path `lastName` is required.\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error for firstName\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.data.firstName).to.eql(\"Path `firstName` is required.\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Check error for email\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.data.email).to.eql(\"Path `email` is required.\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
 					{
 						"key": "app-id",
-						"value": "64c29eb227714c30ef07ecee",
+						"value": "{{app-id}}",
 						"type": "text"
 					}
 				],
@@ -230,6 +400,36 @@
 				}
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "app-id",
+			"value": ""
+		},
+		{
+			"key": "user_id",
+			"value": ""
 		}
 	]
 }
